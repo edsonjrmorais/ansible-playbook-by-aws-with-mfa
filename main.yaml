@@ -1,0 +1,17 @@
+---
+- name: AWS Infrastructure
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - "./config/config_of_aws_teams_accounts.json"
+  roles:
+    - { role: aws-assume-role, tags: ["always"] }
+
+    # IAM User
+    - { role: delivery-aws-iam-user, tags: ["delivery-aws-iam-user", "product-aws-account-bootstrap"] }
+    - { role: destroy-aws-iam-user, tags: ["destroy-aws-iam-user", "destroy-product-aws-account-bootstrap", "destroy"] }
+
+    # S3 Bucket
+    - { role: delivery-aws-s3-bucket, tags: ["delivery-aws-s3-bucket", "product-aws-account-bootstrap"] }
+    - { role: destroy-aws-s3-bucket, tags: ["destroy-aws-s3-bucket", "destroy-product-aws-account-bootstrap", "destroy"] }
+...

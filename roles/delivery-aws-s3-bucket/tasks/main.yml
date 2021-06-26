@@ -1,0 +1,118 @@
+---
+- name: duplicating [templates/aws-s3-bucket-policy.json.template] to defining policy for {{ aws_teams_accounts[aws_team_account].bucket_name }}
+  copy:
+    src: templates/aws-s3-bucket-policy.json.template
+    dest: aws-s3-bucket-policy.json
+
+- name: defining bucket name as {{ aws_teams_accounts[aws_team_account].bucket_name }} in file aws-s3-bucket-policy.json
+  replace:
+    dest: aws-s3-bucket-policy.json
+    regexp: '#bucket_name#'
+    replace: '{{ aws_teams_accounts[aws_team_account].bucket_name }}'
+
+- name: defining bucket name as {{ aws_teams_accounts[aws_team_account].bucket_name }} in file aws-s3-bucket-policy.json
+  replace:
+    dest: aws-s3-bucket-policy.json
+    regexp: '#account_number#'
+    replace: '{{ aws_teams_accounts[aws_team_account].account_number }}'
+
+- name: defining bucket name as {{ aws_teams_accounts[aws_team_account].bucket_name }} in file aws-s3-bucket-policy.json
+  replace:
+    dest: aws-s3-bucket-policy.json
+    regexp: '#identity#'
+    replace: '{{ aws_teams_accounts[aws_team_account].identity }}'
+
+- name: creating aws s3 for team account {{ aws_teams_accounts[aws_team_account].bucket_name }}
+  amazon.aws.s3_bucket:
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    security_token: "{{ security_token }}"
+    name: "{{ aws_teams_accounts[aws_team_account].bucket_name }}"
+    policy: "{{ lookup('file','aws-s3-bucket-policy.json') }}"
+    region: "{{ aws_teams_accounts[aws_team_account].region }}"
+    tags:
+      AMS: devops
+
+- name: removing file [aws-s3-bucket-policy.json]
+  file:
+    path: aws-s3-bucket-policy.json
+    state: absent
+
+- name: duplicating [templates/s3-website-index.html.template] to {{ aws_teams_accounts[aws_team_account].bucket_name }}
+  copy:
+    src: templates/s3-website-index.html.template
+    dest: s3-website-index.html
+
+- name: defining file name as {{ aws_teams_accounts[aws_team_account].bucket_name }} in file s3-website-index.html
+  replace:
+    dest: s3-website-index.html
+    regexp: '#bucket_name#'
+    replace: '{{ aws_teams_accounts[aws_team_account].bucket_name }}'
+
+- name: storing s3-website-index.html to set as [suffix] in task [configure the s3 bucket as a website]
+  amazon.aws.aws_s3:
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    security_token: "{{ security_token }}"
+    bucket: "{{ aws_teams_accounts[aws_team_account].bucket_name }}"
+    object: s3-website-index.html
+    permission: public-read
+    src: s3-website-index.html
+    mode: put
+
+- name: removing local file [s3-website-index.html]
+  file:
+    path: s3-website-index.html
+    state: absent
+
+- name: duplicating [templates/s3-website-error.html.template] to {{ aws_teams_accounts[aws_team_account].bucket_name }}
+  copy:
+    src: templates/s3-website-error.html.template
+    dest: s3-website-error.html
+
+- name: defining file name as {{ aws_teams_accounts[aws_team_account].bucket_name }} in file s3-website-error.html
+  replace:
+    dest: s3-website-error.html
+    regexp: '#bucket_name#'
+    replace: '{{ aws_teams_accounts[aws_team_account].bucket_name }}'
+
+- name: storing s3-website-error.html to set as [suffix] in task [configure the s3 bucket as a website]
+  amazon.aws.aws_s3:
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    security_token: "{{ security_token }}"
+    bucket: "{{ aws_teams_accounts[aws_team_account].bucket_name }}"
+    object: s3-website-error.html
+    permission: public-read
+    src: s3-website-error.html
+    mode: put
+
+- name: removing local file [s3-website-error.html]
+  file:
+    path: s3-website-error.html
+    state: absent
+
+- name: Removing the s3 bucket as a website
+  community.aws.s3_website:
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    security_token: "{{ security_token }}"
+    name: "{{ aws_teams_accounts[aws_team_account].bucket_name }}"
+    state: absent
+
+- name: configure the s3 bucket as a website
+  community.aws.s3_website:
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    security_token: "{{ security_token }}"
+    name: "{{ aws_teams_accounts[aws_team_account].bucket_name }}"
+    suffix: "s3-website-index.html"
+    error_key: "s3-website-error.html"
+    state: present
+
+- name: print S3 bucket URL
+  debug:
+    msg: >-
+      The s3 Website URL is
+      http://{{ aws_teams_accounts[aws_team_account].bucket_name }}.s3-website-{{ aws_teams_accounts[aws_team_account].region }}.amazonaws.com
+...

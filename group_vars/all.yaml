@@ -1,0 +1,4 @@
+---
+var_globals:
+  aws_master_account: 0000000000
+...

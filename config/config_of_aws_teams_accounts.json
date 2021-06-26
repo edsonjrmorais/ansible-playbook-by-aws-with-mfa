@@ -1,0 +1,46 @@
+{
+    "aws_teams_accounts":{
+        "env-dev":
+                {
+                    "account_number": "1111111111",
+                    "identity": "user-dev-id00",
+                    "bucket_name": "bkt-env-dev",
+                    "iam_user_policies": [
+                        "aws-iam-user-policy-s3.json.template",
+                        "aws-iam-user-policy-secret-manager.json.template"
+                    ],
+                    "bucket_policy": "*",
+                    "assume_role_name": "Administrator",
+                    "role_session_name": "devops-automation",
+                    "region": "eu-west-1"
+                },
+        "env-qa":
+                {
+                    "account_number": "2222222222",
+                    "identity": "user-qa-id00",
+                    "bucket_name": "bkt-env-qa",
+                    "iam_user_policies": [
+                        "aws-iam-user-policy-s3.json.template",
+                        "aws-iam-user-policy-secret-manager.json.template"
+                    ],
+                    "bucket_policy": "*",
+                    "assume_role_name": "Administrator",
+                    "role_session_name": "devops-automation",
+                    "region": "eu-west-1"
+                },
+        "env-prd":
+                {
+                    "account_number": "3333333333",
+                    "identity": "user-prd-id00",
+                    "bucket_name": "bkt-env-prd",
+                    "iam_user_policies": [
+                        "aws-iam-user-policy-s3.json.template",
+                        "aws-iam-user-policy-secret-manager.json.template"
+                    ],
+                    "bucket_policy": "*",
+                    "assume_role_name": "Administrator",
+                    "role_session_name": "devops-automation",
+                    "region": "eu-west-1"
+                }
+    }
+}

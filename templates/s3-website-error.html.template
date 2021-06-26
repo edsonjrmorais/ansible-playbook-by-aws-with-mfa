@@ -1,0 +1,10 @@
+<html class="no-js" lang="">
+    <head>
+        <meta charset="utf-8">
+        <title>#bucket_name#</title>        
+    </head>
+    <body>
+        <p>file: error.html</p>
+        <p>Message to error in S3 Web Site for #bucket_name#</p>
+    </body>
+</html>

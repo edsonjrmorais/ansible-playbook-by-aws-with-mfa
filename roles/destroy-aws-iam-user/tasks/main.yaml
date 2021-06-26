@@ -1,0 +1,21 @@
+---
+- name: destroy iam policy for team user {{ aws_teams_accounts[aws_team_account].identity }}
+  iam_policy:
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    security_token: "{{ security_token }}"
+    iam_type: user
+    iam_name: "{{ aws_teams_accounts[aws_team_account].identity }}"
+    policy_name: "policy-{{ aws_teams_accounts[aws_team_account].identity }}"
+    state: absent
+  ignore_errors: true
+
+- name: destroy iam for team user {{ aws_teams_accounts[aws_team_account].identity }}
+  iam:
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    security_token: "{{ security_token }}"
+    iam_type: user
+    name: "{{ aws_teams_accounts[aws_team_account].identity }}"
+    state: absent
+...

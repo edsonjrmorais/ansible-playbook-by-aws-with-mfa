@@ -1,0 +1,16 @@
+[profile bob]
+role_session_name = devops-automation
+region = eu-west-1
+output = json
+
+[profile env-dev]
+role_arn = arn:aws:iam::@env-dev-account-number:role/@role-name-with-least-privilege
+source_profile = bob
+
+[profile env-qa]
+role_arn = arn:aws:iam::@env-qa-account-number:role/@role-name-with-least-privilege
+source_profile = bob
+
+[profile env-prd]
+role_arn = arn:aws:iam::@env-prd-account-number:role/@role-name-with-least-privilege
+source_profile = bob

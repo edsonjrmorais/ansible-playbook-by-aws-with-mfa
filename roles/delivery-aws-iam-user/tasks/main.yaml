@@ -1,0 +1,107 @@
+---
+- name: Generate Random Password
+  set_fact:
+    random_password: "{{ lookup('password', '/dev/null chars=ascii_letters,digits,punctuation length=8') }}"
+
+- name: create iam for team user {{ aws_teams_accounts[aws_team_account].identity }}
+  iam:
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    security_token: "{{ security_token }}"
+    iam_type: user
+    name: "{{ aws_teams_accounts[aws_team_account].identity }}"
+    state: present
+    password: "{{ random_password }}"
+  register: aws_iam_user
+
+- name: list current access key for {{ aws_teams_accounts[aws_team_account].identity }}
+  command: aws iam list-access-keys --user-name {{ aws_teams_accounts[aws_team_account].identity }}
+  environment:
+    AWS_REGION: "{{ aws_teams_accounts[aws_team_account].region }}"
+    AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+    AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+    AWS_SESSION_TOKEN: "{{ security_token }}"
+  register: aws_iam_user_qty_keys
+
+- name: create access key for {{ aws_teams_accounts[aws_team_account].identity }}
+  command: aws iam create-access-key --user-name {{ aws_teams_accounts[aws_team_account].identity }}
+  environment:
+    AWS_REGION: "{{ aws_teams_accounts[aws_team_account].region }}"
+    AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+    AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+    AWS_SESSION_TOKEN: "{{ security_token }}"
+  when: (aws_iam_user_qty_keys.stdout | from_json).AccessKeyMetadata|length  < 2
+  register: aws_iam_user_keys
+
+- name: duplicating [ templates/aws-iam-user-policy-s3.json.template] to {{ aws_teams_accounts[aws_team_account].identity }}
+  copy:
+    src: templates/aws-iam-user-policy-s3.json.template
+    dest: aws-iam-user-policy-s3.json
+  when: "'aws-iam-user-policy-s3.json.template' in aws_teams_accounts[aws_team_account].iam_user_policies "
+
+- name: defining file name as {{ aws_teams_accounts[aws_team_account].bucket_policy }} in file aws-iam-user-policy-s3.json
+  replace:
+    dest: aws-iam-user-policy-s3.json
+    regexp: '#bucket_policy#'
+    replace: '{{ aws_teams_accounts[aws_team_account].bucket_policy }}'
+  when: "'aws-iam-user-policy-s3.json.template' in aws_teams_accounts[aws_team_account].iam_user_policies "
+
+- name: duplicating [ templates/aws-iam-user-policy-secret-manager.json.template] to {{ aws_teams_accounts[aws_team_account].identity }}
+  copy:
+    src: templates/aws-iam-user-policy-secret-manager.json.template
+    dest: aws-iam-user-policy-secret-manager.json
+  when: "'aws-iam-user-policy-secret-manager.json.template' in aws_teams_accounts[aws_team_account].iam_user_policies "
+
+- name: defining file name as {{ aws_teams_accounts[aws_team_account].account_number }} in file aws-iam-user-policy-secret-manager.json
+  replace:
+    dest: aws-iam-user-policy-secret-manager.json
+    regexp: '#account_number#'
+    replace: '{{ aws_teams_accounts[aws_team_account].account_number }}'
+  when: "'aws-iam-user-policy-secret-manager.json.template' in aws_teams_accounts[aws_team_account].iam_user_policies "
+
+- name: defining file name as {{ aws_teams_accounts[aws_team_account].region }} in file aws-iam-user-policy-secret-manager.json
+  replace:
+    dest: aws-iam-user-policy-secret-manager.json
+    regexp: '#region#'
+    replace: '{{ aws_teams_accounts[aws_team_account].region }}'
+  when: "'aws-iam-user-policy-secret-manager.json.template' in aws_teams_accounts[aws_team_account].iam_user_policies "
+
+- name: create iam policy for team user {{ aws_teams_accounts[aws_team_account].identity }}
+  iam_policy:
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    security_token: "{{ security_token }}"
+    iam_type: user
+    iam_name: "{{ aws_teams_accounts[aws_team_account].identity }}"
+    policy_name: "policy-{{ aws_teams_accounts[aws_team_account].identity }}-{{  item | replace('.json.template','') }}"
+    state: present
+    policy_json: " {{ lookup( 'template',  item | replace('.template','') ) }} "
+  loop: "{{ aws_teams_accounts[aws_team_account].iam_user_policies }}"
+
+- name: removing file [aws-iam-user-policy-s3.json]
+  file:
+    path: aws-iam-user-policy-s3.json
+    state: absent
+  when: "'aws-iam-user-policy-s3.json.template' in aws_teams_accounts[aws_team_account].iam_user_policies "
+
+- name: removing file [aws-iam-user-policy-secret-manager.json]
+  file:
+    path: aws-iam-user-policy-secret-manager.json
+    state: absent
+  when: "'aws-iam-user-policy-secret-manager.json.template' in aws_teams_accounts[aws_team_account].iam_user_policies "
+
+- name: displaying [ {{ aws_teams_accounts[aws_team_account].identity }} ] informations
+  debug:
+    msg: >-
+      The password of [
+      {{ aws_teams_accounts[aws_team_account].identity }}
+      ] is {{ random_password }} and its keys are:
+      {{ (aws_iam_user_keys.stdout | from_json) }}.
+  when: (aws_iam_user_qty_keys.stdout | from_json).AccessKeyMetadata|length  < 2
+
+- name: displaying list of aws access key of [ aws_iam_user ]
+  debug:
+    msg: "The qty access keys of [ aws_iam_user ] is: {{  (aws_iam_user_qty_keys.stdout | from_json).AccessKeyMetadata }}."
+  when: (aws_iam_user_qty_keys.stdout | from_json).AccessKeyMetadata|length  >= 2
+
+...

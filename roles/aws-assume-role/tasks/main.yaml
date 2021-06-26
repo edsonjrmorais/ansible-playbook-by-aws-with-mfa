@@ -1,0 +1,17 @@
+---
+- name: >-
+    assuming deployment account role
+    {{ aws_teams_accounts[aws_team_account].account_number }}:role/{{ aws_teams_accounts[aws_team_account].assume_role_name }}
+  sts_assume_role:
+    role_arn: arn:aws:iam::{{ aws_teams_accounts[aws_team_account].account_number }}:role/{{ aws_teams_accounts[aws_team_account].assume_role_name }}
+    role_session_name: "{{ aws_teams_accounts[aws_team_account].role_session_name }}"
+    mfa_serial_number: arn:aws:iam::{{ var_globals.aws_master_account }}:mfa/{{ devops_operator }}
+    mfa_token: "{{ devops_operator_mfa_token }}"
+  register: assumed_role
+
+- name: set username and keys
+  set_fact:
+    aws_access_key: "{{ assumed_role.sts_creds.access_key }}"
+    aws_secret_key: "{{ assumed_role.sts_creds.secret_key }}"
+    security_token: "{{ assumed_role.sts_creds.session_token }}"
+...
